@@ -1,0 +1,48 @@
+:root { --gap: 10px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto; }
+body { margin:0; background:#111; color:#eee; }
+.topbar { display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#1f1f1f; border-bottom:1px solid #333; position:sticky; top:0; }
+.topbar .left { display:flex; gap:8px; align-items:center; }
+.topbar button { background:#333; color:#ddd; border:1px solid #444; padding:6px 10px; border-radius:8px; cursor:pointer; }
+.hidden { display:none; }
+
+
+.tabs { display:flex; gap:6px; padding:8px; border-bottom:1px solid #333; background:#181818; overflow:auto; }
+.tabs .tab { background:#222; border:1px solid #333; padding:6px 10px; border-radius:10px; cursor:pointer; white-space:nowrap; }
+.tabs .tab.active { background:#3a3a3a; }
+
+
+.page { padding:12px; }
+.page-head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+#pageTitle { font-size:20px; padding:6px 8px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:#eee; width:50%; }
+.actions { display:flex; align-items:center; gap:10px; }
+
+
+.charms { display:flex; flex-wrap:wrap; gap: var(--gap); padding:12px 0; }
+.charm { position:relative; width:140px; aspect-ratio:1/1; background:#1a1a1a; border:1px solid #333; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:8px; cursor:pointer; }
+.charm .trash { position:absolute; top:6px; right:6px; background:#2a2a2a; border:1px solid #444; color:#ddd; border-radius:8px; padding:2px 6px; display:none; }
+.charm:hover .trash { display:block; }
+.shape { width:80px; height:80px; }
+.ctitle { font-size:14px; color:#ddd; text-align:center; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+
+.note textarea { width:100%; min-height:80px; background:#1a1a1a; color:#eee; border:1px solid #333; border-radius:10px; padding:8px; }
+.meta { display:flex; gap:14px; opacity:0.7; font-size:12px; margin-top:8px; }
+
+
+/* colors */
+.color-red { fill:#ef4444; }
+.color-green { fill:#22c55e; }
+.color-blue { fill:#3b82f6; }
+.color-yellow { fill:#eab308; }
+.color-purple { fill:#a855f7; }
+.color-pink { fill:#ec4899; }
+.color-gold { fill:#d4af37; }
+.color-black { fill:#111111; }
+.color-orange { fill:#f97316; }
+.color-darkgray { fill:#374151; }
+
+
+/* dialogs */
+dialog { background:#1a1a1a; color:#eee; border:1px solid #333; border-radius:12px; padding:16px; }
+dialog input, dialog select { background:#111; color:#eee; border:1px solid #333; border-radius:8px; padding:6px; width:100%; }
+dialog menu { display:flex; justify-content:flex-end; gap:10px; margin-top:12px; }

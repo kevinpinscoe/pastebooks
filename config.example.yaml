@@ -1,0 +1,6 @@
+port: 8080
+jwt_secret: "change-me-super-secret"
+auth_disabled: false         # <— add this (true in dev; false in prod)
+cookie_secure: true # <- Make cookie security configurable with false for local testing
+database:
+dsn: "root:rootpass@tcp(db:3306)/charmsdb?parseTime=true&charset=utf8mb4"

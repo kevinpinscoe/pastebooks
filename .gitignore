@@ -1,0 +1,5 @@
+config.yaml
+# DB dumps
+backup-charmsdb-*.sql
+backup-charmsdb-*.sql.gz
+.vscode/

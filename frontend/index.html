@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pastebooks</title>
+  <!-- NOTE: static assets are served from /static now -->
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="left">
+      <button id="btnNewPage" title="New page">☰</button>
+      <span id="brand">Pastebooks</span>
+    </div>
+    <div class="right" id="authArea">
+      <form id="loginForm">
+        <input type="email" id="email" placeholder="email" required />
+        <input type="password" id="pass" placeholder="passcode" required />
+        <button type="submit">Login</button>
+        <button type="button" id="btnRegister">Register</button>
+      </form>
+      <div id="me" class="hidden">
+        <span id="meId"></span>
+        <button id="btnLogout">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <nav id="tabs" class="tabs"></nav>
+
+    <section id="page" class="page">
+      <div class="page-head">
+        <input id="pageTitle" placeholder="Page title" />
+        <div class="actions">
+          <label><input type="checkbox" id="pagePublic" /> Public (read-only for others)</label>
+          <button id="btnSavePage">Save Page</button>
+          <button id="btnAddCharm" title="Add charm">＋</button>
+        </div>
+      </div>
+
+      <div id="charms" class="charms"></div>
+
+      <div class="note">
+        <textarea id="pageNote" placeholder="Page note..."></textarea>
+      </div>
+
+      <footer class="meta">
+        <span id="createdAt"></span>
+        <span id="updatedAt"></span>
+        <span id="shareLink"></span>
+      </footer>
+    </section>
+  </main>
+
+  <template id="charmTpl">
+    <div class="charm">
+      <button class="trash" title="Delete">🗑</button>
+      <svg viewBox="0 0 100 100" class="shape"></svg>
+      <div class="ctitle"></div>
+    </div>
+  </template>
+
+  <dialog id="dlgCharm">
+    <form method="dialog">
+      <h3>New/Edit Charm</h3>
+      <label>Title <input id="chTitle" maxlength="255" /></label>
+      <label>Value (max 256) <input id="chValue" maxlength="256" /></label>
+      <label>Shape
+        <select id="chShape"></select>
+      </label>
+      <label>Color
+        <select id="chColor"></select>
+      </label>
+      <menu>
+        <button value="cancel">Cancel</button>
+        <button id="chSave" value="default">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="static/app.js"></script>
+</body>
+</html>

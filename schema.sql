@@ -1,0 +1,39 @@
+CREATE DATABASE IF NOT EXISTS charmsdb CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+USE charmsdb;
+
+
+CREATE TABLE IF NOT EXISTS users (
+id CHAR(36) PRIMARY KEY,
+email VARCHAR(255) NOT NULL UNIQUE,
+pass_hash VARBINARY(60) NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS pages (
+id CHAR(36) PRIMARY KEY,
+owner_id CHAR(36) NOT NULL,
+title VARCHAR(255) NOT NULL,
+note TEXT,
+is_public BOOLEAN NOT NULL DEFAULT FALSE,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS charms (
+id CHAR(36) PRIMARY KEY,
+page_id CHAR(36) NOT NULL,
+shape ENUM('square','star','circle','triangle','rectangle','diamond','heart','clover','spade','hexagon','squiggle') NOT NULL,
+color ENUM('red','green','blue','yellow','purple','pink','gold','black','orange','darkgray') NOT NULL,
+title VARCHAR(255) NOT NULL,
+text_value VARCHAR(256) NOT NULL,
+created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+
+CREATE INDEX idx_pages_owner ON pages(owner_id);
+CREATE INDEX idx_charms_page ON charms(page_id);
