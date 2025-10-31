@@ -1,7 +1,7 @@
 # Paste Books
 
-Self-hosted webapp to store past buffers on different
-pages which can be shared with other users. On each page
+Self-hosted webapp to store past buffers in different
+books which can be shared with other users. On each book
 is a paste buffers stylized as charms (shapes and colors)
 for easy memory. The idea is for frequent paste buffers
 for yourself or a team.
@@ -61,14 +61,14 @@ Colors: `red, green, blue, yellow, purple, pink, gold, black, orange, darkgray`
 - `POST /api/login {email, passcode}` → sets `auth` HttpOnly cookie
 - `POST /api/logout`
 - `GET /api/me`
-- Pages (auth required):
+- Books (auth required):
 - `GET /api/books` (mine)
 - `POST /api/books` {title, note, is_public}
 - `GET /api/books/:id` (owner)
 - `PUT /api/books/:id` {title?, note?, is_public?}
 - `DELETE /api/books/:id`
 - Public read:
-- `GET /api/public/pages/:id` (no auth, returns read-only)
+- `GET /api/public/books/:id` (no auth, returns read-only)
 - Charms (owner):
 - `GET /api/books/:id/charms`
 - `POST /api/books/:id/charms` {shape, color, title, text_value}
