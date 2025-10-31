@@ -42,7 +42,7 @@ ghcr.io/kevinpinscoe/pastebooks:dev
 
 Browsers will only send it over HTTPS.
 
-If you're running pastebooks behind TLS (e.g. via Apache reverse proxy or Nginx, this is recommended. If you try to use it over plain http://localhost:8080, the browser will not send the cookie — logins won't "stick".
+If you're running pastebooks behind TLS (e.g. via Apache reverse proxy or Nginx), this is recommended. If you try to use it over plain http://localhost:8080, the browser will not send the cookie — logins won't "stick".
 
 `cookie_secure: false # The cookie will be sent over both HTTP and HTTPS. Use this only for local testing (e.g. localhost:8080 without HTTPS)`
 
