@@ -37,9 +37,22 @@ ghcr.io/kevinpinscoe/pastebooks:dev
 - MySQL 8.x (or MariaDB 10.6+)
 
 ## Configuration (`config.yaml`)
+
+`cookie_secure: true # The cookie will include the Secure flag.`
+
+Browsers will only send it over HTTPS.
+
+If you're running pastebooks behind TLS (e.g. via Apache reverse proxy or Nginx, this is recommended. If you try to use it over plain http://localhost:8080, the browser will not send the cookie — logins won't "stick".
+
+`cookie_secure: false # The cookie will be sent over both HTTP and HTTPS. Use this only for local testing (e.g. localhost:8080 without HTTPS)`
+
+Use `cookie_secure` in cooperation with `auth_disabled` for local development.
+
 ```yaml
 port: 8080
 jwt_secret: "change-me-super-secret"
+auth_disabled: false         # <— add this (true in dev; false in prod)
+cookie_secure: true
 database:
 dsn: "youruser:yourpass@tcp(localhost:3306)/charmsdb?parseTime=true&charset=utf8mb4"
 ```
