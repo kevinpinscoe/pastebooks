@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <div class="left">
-      <button id="btnNewPage" title="New page">☰</button>
+      <button id="btnNewBook" title="New book">☰</button>
       <span id="brand">Pastebooks</span>
     </div>
     <div class="right" id="authArea">
@@ -30,12 +30,12 @@
   <main>
     <nav id="tabs" class="tabs"></nav>
 
-    <section id="page" class="page">
-      <div class="page-head">
-        <input id="pageTitle" placeholder="Page title" />
+    <section id="book" class="book">
+      <div class="book-head">
+        <input id="bookTitle" placeholder="Book title" />
         <div class="actions">
-          <label><input type="checkbox" id="pagePublic" /> Public (read-only for others)</label>
-          <button id="btnSavePage">Save Page</button>
+          <label><input type="checkbox" id="bookPublic" /> Public (read-only for others)</label>
+          <button id="btnSaveBook">Save Book</button>
           <button id="btnAddCharm" title="Add charm">＋</button>
         </div>
       </div>
@@ -43,7 +43,7 @@
       <div id="charms" class="charms"></div>
 
       <div class="note">
-        <textarea id="pageNote" placeholder="Page note..."></textarea>
+        <textarea id="bookNote" placeholder="Book note..."></textarea>
       </div>
 
       <footer class="meta">
@@ -80,6 +80,6 @@
     </form>
   </dialog>
 
-  <script src="static/app.js"></script>
+  <script src="/static/app.js"></script>
 </body>
 </html>

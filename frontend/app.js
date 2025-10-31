@@ -40,7 +40,7 @@ async function delJSON(u) {
 // ===== tiny DOM helpers & state =====
 const $  = (s, p = document) => p.querySelector(s);
 const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
-let state = { userId: "", pages: [], currentPage: null, charms: [] };
+let state = { userId: "", books: [], currentBook: null, charms: [] };
 
 // ===== API (all paths RELATIVE; no leading slash) =====
 const api = {
@@ -48,13 +48,13 @@ const api = {
   login:        (email, passcode) => postJSON('api/login', { email, passcode }),
   register:     (email, passcode) => postJSON('api/register', { email, passcode }),
   logout:       () => postJSON('api/logout', {}),
-  myPages:      () => fetchJSON('api/pages'),
-  getPage:      (id) => fetchJSON(`api/pages/${id}`),
-  savePage:     (id, body) => putJSON(`api/pages/${id}`, body),
-  createPage:   (body) => postJSON('api/pages', body),
-  delPage:      (id) => delJSON(`api/pages/${id}`),
-  listCharms:   (pid) => fetchJSON(`api/pages/${pid}/charms`),
-  createCharm:  (pid, body) => postJSON(`api/pages/${pid}/charms`, body),
+  myBooks:      () => fetchJSON('api/books'),
+  getBooks:      (id) => fetchJSON(`api/books/${id}`),
+  saveBook:     (id, body) => putJSON(`api/books/${id}`, body),
+  createBook:   (body) => postJSON('api/books', body),
+  delBook:      (id) => delJSON(`api/books/${id}`),
+  listCharms:   (pid) => fetchJSON(`api/books/${pid}/charms`),
+  createCharm:  (pid, body) => postJSON(`api/books/${pid}/charms`, body),
   updateCharm:  (id, body) => putJSON(`api/charms/${id}`, body),
   delCharm:     (id) => delJSON(`api/charms/${id}`),
 };
@@ -119,31 +119,31 @@ $('#btnLogout')?.addEventListener('click', async () => {
   }
 });
 
-// ===== page actions =====
-$('#btnNewPage')?.addEventListener('click', async () => {
-  const title = prompt('New page title');
+// ===== book actions =====
+$('#btnNewBook')?.addEventListener('click', async () => {
+  const title = prompt('New book title');
   if (!title) return;
-  const res = await api.createPage({ title, note:'', is_public:false });
-  await loadPages();
-  await selectPage(res.id);
+  const res = await api.createBook({ title, note:'', is_public:false });
+  await loadBooks();
+  await selectBook(res.id);
 });
 
-$('#btnSavePage')?.addEventListener('click', async () => {
-  if (!state.currentPage) return;
-  await api.savePage(state.currentPage.id, {
-    title: $('#pageTitle').value,
-    note: $('#pageNote').value,
-    is_public: $('#pagePublic').checked
+$('#btnSaveBook')?.addEventListener('click', async () => {
+  if (!state.currentBook) return;
+  await api.saveBook(state.currentBook.id, {
+    title: $('#bookTitle').value,
+    note: $('#bookNote').value,
+    is_public: $('#bookPublic').checked
   });
-  await selectPage(state.currentPage.id);
-  await loadPages();
+  await selectBook(state.currentBook.id);
+  await loadBooks();
 });
 
 $('#btnAddCharm')?.addEventListener('click', async () => {
-  if (!state.currentPage) {
-    const res = await api.createPage({ title: 'New Page', note:'', is_public:false });
-    await loadPages();
-    await selectPage(res.id);
+  if (!state.currentBook) {
+    const res = await api.createBook({ title: 'New Book', note:'', is_public:false });
+    await loadBooks();
+    await selectBook(res.id);
   }
   openCharmDialog();
 });
@@ -152,11 +152,11 @@ $('#btnAddCharm')?.addEventListener('click', async () => {
 function renderTabs() {
   const tabs = $('#tabs');
   tabs.innerHTML = '';
-  state.pages.forEach(p => {
+  state.books.forEach(b => {
     const el = document.createElement('div');
-    el.className = 'tab' + (state.currentPage && p.id === state.currentPage.id ? ' active' : '');
-    el.textContent = p.title;
-    el.addEventListener('click', () => selectPage(p.id));
+    el.className = 'tab' + (state.currentBook && b.id === state.currentBook.id ? ' active' : '');
+    el.textContent = b.title;
+    el.addEventListener('click', () => selectBook(b.id));
     tabs.appendChild(el);
   });
 }
@@ -226,9 +226,9 @@ function openCharmDialog(existing) {
       color: $('#chColor').value
     };
     if (existing) await api.updateCharm(existing.id, body);
-    else          await api.createCharm(state.currentPage.id, body);
+    else          await api.createCharm(state.currentBook.id, body);
     dlg.close();
-    state.charms = await api.listCharms(state.currentPage.id);
+    state.charms = await api.listCharms(state.currentBook.id);
     renderCharms();
   };
 }
@@ -252,21 +252,21 @@ function shapePath(name) {
 }
 
 // ===== data flows =====
-async function loadPages() {
-  state.pages = await api.myPages();
+async function loadBooks() {
+  state.books = await api.myBooks();
   renderTabs();
 }
 
-async function selectPage(id) {
-  state.currentPage = await api.getPage(id);
-  $('#pageTitle').value    = state.currentPage.title || '';
-  $('#pageNote').value     = state.currentPage.note || '';
-  $('#pagePublic').checked = !!state.currentPage.is_public;
-  $('#createdAt').textContent = 'Created: ' + new Date(state.currentPage.created_at).toLocaleString();
-  $('#updatedAt').textContent = 'Last edit: ' + new Date(state.currentPage.updated_at).toLocaleString();
+async function selectBook(id) {
+  state.currentBook = await api.getBooks(id);
+  $('#bookTitle').value    = state.currentBook.title || '';
+  $('#bookNote').value     = state.currentBook.note || '';
+  $('#bookPublic').checked = !!state.currentBook.is_public;
+  $('#createdAt').textContent = 'Created: ' + new Date(state.currentBook.created_at).toLocaleString();
+  $('#updatedAt').textContent = 'Last edit: ' + new Date(state.currentBook.updated_at).toLocaleString();
 
   // Respect base path for public link
-  const link = withBase(`api/public/pages/${state.currentPage.id}`);
+  const link = withBase(`api/public/books/${state.currentBook.id}`);
   $('#shareLink').innerHTML = `<a href="${link}" target="_blank">Public link</a>`;
 
   state.charms = await api.listCharms(id);
@@ -285,8 +285,8 @@ async function boot() {
       $('#meId').textContent = state.userId.slice(0,8) + (me.dev ? '… (dev)' : '…');
       $('#me')?.classList.remove('hidden');
 
-      await loadPages();
-      if (state.pages.length) await selectPage(state.pages[0].id);
+      await loadBooks();
+      if (state.books.length) await selectBook(state.books[0].id);
     } else {
       $('#loginForm')?.classList.remove('hidden');
       $('#me')?.classList.add('hidden');

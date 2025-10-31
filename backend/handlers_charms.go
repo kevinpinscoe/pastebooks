@@ -19,21 +19,21 @@ type upsertCharmReq struct {
 var allowedShapes = map[string]bool{"square": true, "star": true, "circle": true, "triangle": true, "rectangle": true, "diamond": true, "heart": true, "clover": true, "spade": true, "hexagon": true, "squiggle": true}
 var allowedColors = map[string]bool{"red": true, "green": true, "blue": true, "yellow": true, "purple": true, "pink": true, "gold": true, "black": true, "orange": true, "darkgray": true}
 
-func (h *charmHandler) listByPage(c *gin.Context) {
+func (h *charmHandler) listByBook(c *gin.Context) {
 	uid := mustUserID(c)
 	pid := c.Param("id")
 	// owner check
 	var owner string
 	var isPub bool
-	if err := h.db.QueryRow(`SELECT owner_id, is_public FROM pages WHERE id=?`, pid).Scan(&owner, &isPub); err != nil {
-		c.JSON(404, gin.H{"error": "page"})
+	if err := h.db.QueryRow(`SELECT owner_id, is_public FROM books WHERE id=?`, pid).Scan(&owner, &isPub); err != nil {
+		c.JSON(404, gin.H{"error": "book"})
 		return
 	}
 	if owner != uid {
 		c.JSON(403, gin.H{"error": "forbidden"})
 		return
 	}
-	rows, err := h.db.Query(`SELECT id,page_id,shape,color,title,text_value,created_at,updated_at FROM charms WHERE page_id=? ORDER BY updated_at DESC`, pid)
+	rows, err := h.db.Query(`SELECT id,book_id,shape,color,title,text_value,created_at,updated_at FROM charms WHERE book_id=? ORDER BY updated_at DESC`, pid)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "db"})
 		return
@@ -42,7 +42,7 @@ func (h *charmHandler) listByPage(c *gin.Context) {
 	var out []Charm
 	for rows.Next() {
 		var ch Charm
-		if err := rows.Scan(&ch.ID, &ch.PageID, &ch.Shape, &ch.Color, &ch.Title, &ch.TextValue, &ch.CreatedAt, &ch.UpdatedAt); err == nil {
+		if err := rows.Scan(&ch.ID, &ch.BookID, &ch.Shape, &ch.Color, &ch.Title, &ch.TextValue, &ch.CreatedAt, &ch.UpdatedAt); err == nil {
 			out = append(out, ch)
 		}
 	}
@@ -53,8 +53,8 @@ func (h *charmHandler) create(c *gin.Context) {
 	uid := mustUserID(c)
 	pid := c.Param("id")
 	var owner string
-	if err := h.db.QueryRow(`SELECT owner_id FROM pages WHERE id=?`, pid).Scan(&owner); err != nil {
-		c.JSON(404, gin.H{"error": "page"})
+	if err := h.db.QueryRow(`SELECT owner_id FROM books WHERE id=?`, pid).Scan(&owner); err != nil {
+		c.JSON(404, gin.H{"error": "book"})
 		return
 	}
 	if owner != uid {
@@ -71,7 +71,7 @@ func (h *charmHandler) create(c *gin.Context) {
 		return
 	}
 	id := uuid.NewString()
-	_, err := h.db.Exec(`INSERT INTO charms (id,page_id,shape,color,title,text_value) VALUES (?,?,?,?,?,?)`, id, pid, req.Shape, req.Color, req.Title, req.TextValue)
+	_, err := h.db.Exec(`INSERT INTO charms (id,book_id,shape,color,title,text_value) VALUES (?,?,?,?,?,?)`, id, pid, req.Shape, req.Color, req.Title, req.TextValue)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "db"})
 		return
@@ -83,7 +83,7 @@ func (h *charmHandler) update(c *gin.Context) {
 	uid := mustUserID(c)
 	id := c.Param("id")
 	var pid, owner string
-	if err := h.db.QueryRow(`SELECT c.page_id, p.owner_id FROM charms c JOIN pages p ON p.id=c.page_id WHERE c.id=?`, id).Scan(&pid, &owner); err != nil {
+	if err := h.db.QueryRow(`SELECT c.book_id, p.owner_id FROM charms c JOIN books p ON p.id=c.book_id WHERE c.id=?`, id).Scan(&pid, &owner); err != nil {
 		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}
@@ -116,7 +116,7 @@ func (h *charmHandler) delete(c *gin.Context) {
 	uid := mustUserID(c)
 	id := c.Param("id")
 	var owner string
-	if err := h.db.QueryRow(`SELECT p.owner_id FROM charms c JOIN pages p ON p.id=c.page_id WHERE c.id=?`, id).Scan(&owner); err != nil {
+	if err := h.db.QueryRow(`SELECT p.owner_id FROM charms c JOIN books p ON p.id=c.book_id WHERE c.id=?`, id).Scan(&owner); err != nil {
 		c.JSON(404, gin.H{"error": "not found"})
 		return
 	}

@@ -11,7 +11,7 @@ type User struct {
 	CreatedAt time.Time
 }
 
-type Page struct {
+type Book struct {
 	ID        string    `json:"id"`
 	OwnerID   string    `json:"owner_id"`
 	Title     string    `json:"title"`
@@ -23,7 +23,7 @@ type Page struct {
 
 type Charm struct {
 	ID        string    `json:"id"`
-	PageID    string    `json:"page_id"`
+	BookID    string    `json:"book_id"`
 	Shape     string    `json:"shape"`
 	Color     string    `json:"color"`
 	Title     string    `json:"title"`

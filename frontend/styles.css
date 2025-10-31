@@ -11,9 +11,9 @@ body { margin:0; background:#111; color:#eee; }
 .tabs .tab.active { background:#3a3a3a; }
 
 
-.page { padding:12px; }
-.page-head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-#pageTitle { font-size:20px; padding:6px 8px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:#eee; width:50%; }
+.book { padding:12px; }
+.book-head { display:flex; justify-content:space-between; align-items:center; gap:10px; }
+#bookTitle { font-size:20px; padding:6px 8px; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:#eee; width:50%; }
 .actions { display:flex; align-items:center; gap:10px; }
 
 

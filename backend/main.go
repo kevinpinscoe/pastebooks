@@ -36,7 +36,7 @@ func main() {
 
 	jwt := &jwtMgr{secret: []byte(cfg.JWTSecret)}
 	ah := &authHandler{db: db, jwt: jwt, secure: cfg.CookieSecure}
-	ph := &pageHandler{db: db}
+	ph := &bookHandler{db: db}
 	ch := &charmHandler{db: db}
 
 	r := gin.Default()
@@ -73,7 +73,7 @@ func main() {
 			}
 			c.JSON(200, gin.H{"user_id": ""})
 		})
-		api.GET("/public/pages/:id", ph.getPublic)
+		api.GET("/public/books/:id", ph.getPublic)
 	}
 
 	auth := r.Group("/api")
@@ -83,14 +83,14 @@ func main() {
 		auth.Use(authMiddleware(jwt))
 	}
 	{
-		auth.GET("/pages", ph.listMine)
-		auth.POST("/pages", ph.create)
-		auth.GET("/pages/:id", ph.getMine)
-		auth.PUT("/pages/:id", ph.update)
-		auth.DELETE("/pages/:id", ph.delete)
+		auth.GET("/books", ph.listMine)
+		auth.POST("/books", ph.create)
+		auth.GET("/books/:id", ph.getMine)
+		auth.PUT("/books/:id", ph.update)
+		auth.DELETE("/books/:id", ph.delete)
 
-		auth.GET("/pages/:id/charms", ch.listByPage)
-		auth.POST("/pages/:id/charms", ch.create)
+		auth.GET("/books/:id/charms", ch.listByBook)
+		auth.POST("/books/:id/charms", ch.create)
 		auth.PUT("/charms/:id", ch.update)
 		auth.DELETE("/charms/:id", ch.delete)
 	}
