@@ -6,7 +6,6 @@ is a paste buffers stylized as charms (shapes and colors)
 for easy memory. The idea is for frequent paste buffers
 for yourself or a team.
 
-
 ## Quick start (local dev)
 ```bash
 cp config.example.yaml config.yaml
@@ -25,8 +24,7 @@ make run
 # Open http://localhost:8080
 ```
 
-docker exec -i gocharms-db mysql -uroot -prootpass charmsdb < schema.sql
-## With Docker only
+## Production
 ```bash
 docker build -t ghcr.io/kevinpinscoe/pastebooks:dev .
 docker run --rm -p 8080:8080 \
@@ -34,11 +32,9 @@ docker run --rm -p 8080:8080 \
 ghcr.io/kevinpinscoe/pastebooks:dev
 ```
 
-
 ## Environment
 - Go 1.22+
 - MySQL 8.x (or MariaDB 10.6+)
-
 
 ## Configuration (`config.yaml`)
 ```yaml
@@ -66,16 +62,16 @@ Colors: `red, green, blue, yellow, purple, pink, gold, black, orange, darkgray`
 - `POST /api/logout`
 - `GET /api/me`
 - Pages (auth required):
-- `GET /api/pages` (mine)
-- `POST /api/pages` {title, note, is_public}
-- `GET /api/pages/:id` (owner)
-- `PUT /api/pages/:id` {title?, note?, is_public?}
-- `DELETE /api/pages/:id`
+- `GET /api/books` (mine)
+- `POST /api/books` {title, note, is_public}
+- `GET /api/books/:id` (owner)
+- `PUT /api/books/:id` {title?, note?, is_public?}
+- `DELETE /api/books/:id`
 - Public read:
 - `GET /api/public/pages/:id` (no auth, returns read-only)
 - Charms (owner):
-- `GET /api/pages/:id/charms`
-- `POST /api/pages/:id/charms` {shape, color, title, text_value}
+- `GET /api/books/:id/charms`
+- `POST /api/books/:id/charms` {shape, color, title, text_value}
 - `PUT /api/charms/:id` {shape?, color?, title?, text_value?}
 - `DELETE /api/charms/:id`
 
