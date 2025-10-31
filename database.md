@@ -24,6 +24,34 @@ docker exec -i pastebooks-db \
   mysql -uroot -prootpass charmsdb < backup-charmsdb-2025-10-23.sql
 ```
 
+## Sending a new database container
+
+```
+# Stop and remove containers + the named volumes they use
+docker compose down -v
+# (Optional) Double-tap the specific volume if you want to be explicit)
+docker volume rm pastebooks-dbdata || true
+```
+
+### Bring up just the DB and wait for healthy
+
+```
+docker compose up -d db
+docker logs -f pastebooks-db | sed -n '1,200p'
+# Wait until you see it listening OR the healthcheck passes:
+docker inspect --format='{{json .State.Health.Status}}' pastebooks-db
+# Should show "healthy"
+```
+
+### Import your schema file into the container
+
+```
+docker exec -i pastebooks-db mysql -uroot -prootpass < schema.sql
+# Smoke test
+docker exec -i pastebooks-db mysql -uroot -prootpass -e "SHOW TABLES FROM charmsdb;"
+# Expect: users, books, charms
+```
+
 ## Managing users
 
 Users have an email field and a passcode field.
@@ -48,7 +76,7 @@ docker exec -i pastebooks-db \
   mysql -uroot -prootpass -e "USE charmsdb; DELETE FROM users WHERE email='${EMAIL}';"
 ```
 
-# Create a test user
+### Create a test user
 
 Generate a bcrypt hash with your app or `htpasswd -bnBC 10 '' pass | cut -d: -f2`.
 
@@ -58,6 +86,10 @@ docker exec -i pastebooks-db mysql -uroot -prootpass -D charmsdb -e "
   VALUES (UUID(), 'you@example.com', '\$2y\$10\$replace_with_bcrypt_hash');
 "
 ```
+
+### Change a users password
+
+See the script `reset-user-password.sh`
 
 ## Sanity checks
 
