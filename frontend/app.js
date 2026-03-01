@@ -109,16 +109,8 @@ loginForm?.addEventListener("submit", async (e) => {
     return;
   }
   try {
-    console.log("[login] POST v1/login");
-    const res = await api.login(email, pass);
-    console.log("[login] ok", res);
-    // clear password field
+    await api.login(email, pass);
     if (passEl) passEl.value = "";
-
-    // verify session
-    const me = await api.me();
-    console.log("[me]", me);
-
     await boot();
   } catch (err) {
     console.error("[login] failed:", err);
