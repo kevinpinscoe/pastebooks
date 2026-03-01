@@ -1,20 +1,22 @@
 # --- build backend ---
-FROM golang:1.22 AS backend
+FROM golang:1.25 AS backend
 WORKDIR /src
 
 # 1) seed deps cache
-COPY backend/go.mod ./
+COPY backend/go.mod backend/go.sum ./
 RUN go mod download
 
 # 2) bring in the source
 COPY backend/ ./
 
 # 3) ensure go.sum exists for all imports
-RUN go mod tidy
+# This was just for quick start development
+# and since we are moving to Github Actions
+# This step will no longer be needed
+# RUN go mod tidy
 
 # 4) build
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/server .
-
 
 # --- build frontend (static) ---
 FROM node:22-alpine AS fe
