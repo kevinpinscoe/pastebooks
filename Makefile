@@ -1,7 +1,7 @@
 .PHONY: run fmt lint build
 
 run:
-	go run ./backend -config ./config.yaml
+	cd backend && go run . -config ../config.yaml
 
 build:
 	docker build -t pastebooks:dev .
