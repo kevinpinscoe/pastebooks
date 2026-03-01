@@ -8,10 +8,6 @@ for yourself or a team on a private network.
 
 It is not bullet proof for public access so USE AT YOUR OWN RISK.
 
-This is now version 2 which support Passkeys (password-less).
-
-To see how to upgrade from V1 to V2 see [Upgrading](./upgrade.md).
-
 ## Quick start (local dev)
 ```bash
 cp config.example.yaml config.yaml
