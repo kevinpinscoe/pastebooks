@@ -2,7 +2,6 @@ name: build-and-push
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*.*.*'
 
@@ -12,6 +11,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,7 +25,10 @@ jobs:
         with:
           driver: docker-container
 
-      # Generate tags/labels automatically (branch, semver tag, sha, latest on main)
+      # Generate tags/labels:
+      # - v1.0.1 (exact tag you pushed)
+      # - latest (always on tag pushes)
+      # - sha-... (immutable traceability)
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -33,12 +36,8 @@ jobs:
           images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=tag
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
             type=sha
-            # Add "latest" only for main
-            type=raw,value=latest,enable={{is_default_branch}}
           labels: |
             org.opencontainers.image.source=${{ github.repository }}
 
