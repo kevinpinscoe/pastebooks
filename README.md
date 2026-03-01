@@ -68,13 +68,18 @@ Environment variables override YAML:
 See [Authentication](./auth.md).
 
 ## Shapes & Colors
-Shapes: `square, star, circle, triangle, rectangle, diamond, heart, clover, spade, hexagon, squiggle`
 
+Shapes: 
 
-Colors: `red, green, blue, yellow, purple, pink, gold, black, orange, darkgray`
+square, star, circle, triangle, rectangle, diamond, heart, clover, spade, hexagon, squiggle
+
+Colors: red, green, blue, yellow, purple, pink, gold, black, orange, darkgray.
+
+See [Best Color and Shape Pairings for Memorability](./memorability.md).
 
 
 ## API (summary)
+
 - `POST /api/register {email, passcode}`
 - `POST /api/login {email, passcode}` → sets `auth` HttpOnly cookie
 - `POST /api/logout`
