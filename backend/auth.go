@@ -71,7 +71,7 @@ func (h *authHandler) login(c *gin.Context) {
 }
 
 func (h *authHandler) logout(c *gin.Context) {
-	clearAuthCookie(c)
+	c.SetCookie("auth", "", -1, "/", "", h.secure, true)
 	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
@@ -105,8 +105,4 @@ func (j *jwtMgr) parse(tok string) (*jwtClaims, error) {
 func setAuthCookie(c *gin.Context, tok string, secure bool) {
 	// name, value, maxAge, path, domain, secure, httpOnly
 	c.SetCookie("auth", tok, 60*60*24*30, "/", "", secure, true)
-}
-// Logout
-func clearAuthCookie(c *gin.Context) {
-	c.SetCookie("auth", "", -1, "/", "", true, true)
 }
