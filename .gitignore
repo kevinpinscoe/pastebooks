@@ -8,4 +8,5 @@ notes.txt
 node_modules/*
 package.json
 package-lock.json
-
+# Tag annotation script
+tag.sh
