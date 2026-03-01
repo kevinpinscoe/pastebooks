@@ -4,3 +4,6 @@ backup-charmsdb-*.sql*
 .vscode/
 # Notes to myself
 notes.txt
+# Ignore local npm modules
+node_modules/*
+package.json
