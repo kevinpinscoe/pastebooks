@@ -46,13 +46,23 @@ func main() {
 	r.GET("/", func(c *gin.Context) { // index route
 		c.File("./frontend/index.html")
 	})
-	// Optional: SPA-style fallback (but don't swallow /api/*)
+
 	r.NoRoute(func(c *gin.Context) {
-		if len(c.Request.URL.Path) >= 5 && c.Request.URL.Path[:5] == "/api/" {
-			c.Status(http.StatusNotFound)
+		p := c.Request.URL.Path
+
+		// Never serve SPA HTML for API paths
+		if p == "/api" || (len(p) >= 4 && p[:4] == "/api") {
+			c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 			return
 		}
-		c.File("./frontend/index.html")
+
+		// SPA fallback only for GET/HEAD
+		if c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead {
+			c.File("./frontend/index.html")
+			return
+		}
+
+		c.JSON(http.StatusNotFound, gin.H{"error": "not found"})
 	})
 
 	api := r.Group("/api")
