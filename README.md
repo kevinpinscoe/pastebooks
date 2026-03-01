@@ -1,10 +1,16 @@
 # Paste Books
 
-Self-hosted webapp to store past buffers in different
+Self-hosted webapp to store paste buffers in different
 books which can be shared with other users. On each book
 is a paste buffers stylized as charms (shapes and colors)
 for easy memory. The idea is for frequent paste buffers
-for yourself or a team.
+for yourself or a team on a private network.
+
+It is not bullet proof for public access so USE AT YOUR OWN RISK.
+
+This is now version 2 which support Passkeys (password-less).
+
+To see how to upgrade from V1 to V2 see [Upgrading](./upgrade.md).
 
 ## Quick start (local dev)
 ```bash
@@ -61,6 +67,9 @@ Environment variables override YAML:
 - `JWT_SECRET`
 - `DB_DSN`
 
+## Authentication
+
+See [Authentication](./auth.md).
 
 ## Shapes & Colors
 Shapes: `square, star, circle, triangle, rectangle, diamond, heart, clover, spade, hexagon, squiggle`
