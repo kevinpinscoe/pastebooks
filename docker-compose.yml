@@ -3,7 +3,8 @@ name: pastebooks
 services:
   db:
     image: mysql:8.4
-    container_name: pastebooks-db
+    container_name: pastebooks-db-dev
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
       MYSQL_DATABASE: charmsdb
@@ -18,7 +19,8 @@ services:
   app:
     image: pastebooks:dev
     build: .
-    container_name: pastebooks
+    container_name: pastebooks-dev
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
