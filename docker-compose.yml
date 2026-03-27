@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: charmsdb
     volumes:
       - pastebooks-dbdata:/var/lib/mysql
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro,z
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-prootpass"]
       interval: 5s
@@ -30,6 +30,7 @@ services:
       PORT: "8080"
       DB_DSN: "root:rootpass@tcp(db:3306)/charmsdb?parseTime=true&charset=utf8mb4"
       AUTH_DISABLED: "0"
+      COOKIE_SECURE: "false"
     volumes:
       - ./config.yaml:/app/config.yaml:ro,z
       - ./frontend:/app/frontend:ro,z
