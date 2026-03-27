@@ -28,6 +28,7 @@ type Charm struct {
 	Color     string    `json:"color"`
 	Title     string    `json:"title"`
 	TextValue string    `json:"text_value"`
+	Hidden    bool      `json:"hidden"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }

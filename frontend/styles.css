@@ -21,6 +21,7 @@ body { margin:0; background:#111; color:#eee; }
 .charm { position:relative; width:140px; aspect-ratio:1/1; background:#1a1a1a; border:1px solid #333; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:8px; cursor:pointer; }
 .charm .trash { position:absolute; top:6px; right:6px; background:#2a2a2a; border:1px solid #444; color:#ddd; border-radius:8px; padding:2px 6px; display:none; }
 .charm:hover .trash { display:block; }
+.charm--copied { border-color:#4caf50 !important; box-shadow:0 0 8px #4caf5066; }
 .shape { width:80px; height:80px; }
 .ctitle { font-size:14px; color:#ddd; text-align:center; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 

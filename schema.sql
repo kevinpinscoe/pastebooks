@@ -29,6 +29,7 @@ shape ENUM('square','star','circle','triangle','rectangle','diamond','heart','cl
 color ENUM('red','green','blue','yellow','purple','pink','gold','black','orange','darkgray') NOT NULL,
 title VARCHAR(255) NOT NULL,
 text_value VARCHAR(256) NOT NULL,
+hidden BOOLEAN NOT NULL DEFAULT FALSE,
 created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE

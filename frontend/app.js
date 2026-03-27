@@ -65,6 +65,7 @@ const api = {
   createCharm: (pid, body) => postJSON(`/api/books/${pid}/charms`, body),
   updateCharm: (id, body) => putJSON(`/api/charms/${id}`, body),
   delCharm: (id) => delJSON(`/api/charms/${id}`),
+  getCharmValue: (id) => fetchJSON(`/api/charms/${id}/value`),
 };
 
 // ===== constants =====
@@ -207,6 +208,31 @@ function renderCharms() {
   if (empty) empty.classList.toggle("hidden", list.length > 0);
 }
 
+async function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (_) {
+      // fall through to execCommand fallback
+    }
+  }
+  // execCommand fallback (works after async in more browsers)
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+  document.body.appendChild(ta);
+  ta.select();
+  const ok = document.execCommand("copy");
+  document.body.removeChild(ta);
+  if (!ok) throw new Error("clipboard unavailable");
+}
+
+function flashCopied(el) {
+  el.classList.add("charm--copied");
+  setTimeout(() => el.classList.remove("charm--copied"), 1000);
+}
+
 function charmEl(ch) {
   const tpl = $("#charmTpl").content.cloneNode(true);
   const root = tpl.querySelector(".charm");
@@ -217,11 +243,33 @@ function charmEl(ch) {
   svg.innerHTML = shapePath(ch.shape);
   svg.classList.add("color-" + ch.color);
   title.textContent = ch.title;
-  root.title = (ch.text_value || "") + "\n(click to copy)";
+
+  if (ch.hidden) {
+    root.title = "(hidden — click to copy)";
+    const lock = document.createElement("span");
+    lock.className = "charm-lock";
+    lock.textContent = "🔒";
+    root.appendChild(lock);
+  } else {
+    root.title = (ch.text_value || "") + "\n(click to copy)";
+  }
 
   root.addEventListener("click", async (ev) => {
     if (ev.target === btnDel) return;
-    await navigator.clipboard.writeText(ch.text_value || "");
+    try {
+      let value;
+      if (ch.hidden) {
+        const res = await api.getCharmValue(ch.id);
+        value = res.text_value || "";
+      } else {
+        value = ch.text_value || "";
+      }
+      await copyToClipboard(value);
+      flashCopied(root);
+    } catch (e) {
+      console.error("copy failed:", e);
+      alert("Copy failed: " + e.message);
+    }
   });
 
   btnDel.addEventListener("click", async (ev) => {
@@ -249,7 +297,9 @@ function openCharmDialog(existing) {
     .join("");
 
   $("#chTitle").value = existing?.title || "";
-  $("#chValue").value = existing?.text_value || "";
+  $("#chValue").value = existing?.hidden ? "" : (existing?.text_value || "");
+  $("#chValue").placeholder = existing?.hidden ? "(leave blank to keep existing hidden value)" : "";
+  $("#chHidden").checked = existing?.hidden || false;
   sSel.value = existing?.shape || "square";
   cSel.value = existing?.color || "blue";
 
@@ -260,6 +310,7 @@ function openCharmDialog(existing) {
       text_value: $("#chValue").value,
       shape: $("#chShape").value,
       color: $("#chColor").value,
+      hidden: $("#chHidden").checked,
     };
     if (existing) await api.updateCharm(existing.id, body);
     else await api.createCharm(state.currentBook.id, body);

@@ -14,6 +14,7 @@ type upsertCharmReq struct {
 	Color     string `json:"color"`
 	Title     string `json:"title"`
 	TextValue string `json:"text_value"`
+	Hidden    bool   `json:"hidden"`
 }
 
 var allowedShapes = map[string]bool{"square": true, "star": true, "circle": true, "triangle": true, "rectangle": true, "diamond": true, "heart": true, "clover": true, "spade": true, "hexagon": true, "squiggle": true}
@@ -33,7 +34,7 @@ func (h *charmHandler) listByBook(c *gin.Context) {
 		c.JSON(403, gin.H{"error": "forbidden"})
 		return
 	}
-	rows, err := h.db.Query(`SELECT id,book_id,shape,color,title,text_value,created_at,updated_at FROM charms WHERE book_id=? ORDER BY updated_at DESC`, pid)
+	rows, err := h.db.Query(`SELECT id,book_id,shape,color,title,text_value,hidden,created_at,updated_at FROM charms WHERE book_id=? ORDER BY updated_at DESC`, pid)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "db"})
 		return
@@ -42,7 +43,10 @@ func (h *charmHandler) listByBook(c *gin.Context) {
 	var out []Charm
 	for rows.Next() {
 		var ch Charm
-		if err := rows.Scan(&ch.ID, &ch.BookID, &ch.Shape, &ch.Color, &ch.Title, &ch.TextValue, &ch.CreatedAt, &ch.UpdatedAt); err == nil {
+		if err := rows.Scan(&ch.ID, &ch.BookID, &ch.Shape, &ch.Color, &ch.Title, &ch.TextValue, &ch.Hidden, &ch.CreatedAt, &ch.UpdatedAt); err == nil {
+			if ch.Hidden {
+				ch.TextValue = ""
+			}
 			out = append(out, ch)
 		}
 	}
@@ -71,7 +75,7 @@ func (h *charmHandler) create(c *gin.Context) {
 		return
 	}
 	id := uuid.NewString()
-	_, err := h.db.Exec(`INSERT INTO charms (id,book_id,shape,color,title,text_value) VALUES (?,?,?,?,?,?)`, id, pid, req.Shape, req.Color, req.Title, req.TextValue)
+	_, err := h.db.Exec(`INSERT INTO charms (id,book_id,shape,color,title,text_value,hidden) VALUES (?,?,?,?,?,?,?)`, id, pid, req.Shape, req.Color, req.Title, req.TextValue, req.Hidden)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "db"})
 		return
@@ -104,12 +108,27 @@ func (h *charmHandler) update(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "color"})
 		return
 	}
-	_, err := h.db.Exec(`UPDATE charms SET shape=COALESCE(NULLIF(?,''),shape), color=COALESCE(NULLIF(?,''),color), title=COALESCE(NULLIF(?,''),title), text_value=CASE WHEN ?='' THEN text_value ELSE ? END WHERE id=?`, req.Shape, req.Color, req.Title, req.TextValue, req.TextValue, id)
+	_, err := h.db.Exec(`UPDATE charms SET shape=COALESCE(NULLIF(?,''),shape), color=COALESCE(NULLIF(?,''),color), title=COALESCE(NULLIF(?,''),title), text_value=CASE WHEN ?='' THEN text_value ELSE ? END, hidden=? WHERE id=?`, req.Shape, req.Color, req.Title, req.TextValue, req.TextValue, req.Hidden, id)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "db"})
 		return
 	}
 	c.JSON(200, gin.H{"ok": true})
+}
+
+func (h *charmHandler) getValue(c *gin.Context) {
+	uid := mustUserID(c)
+	id := c.Param("id")
+	var textValue, owner string
+	if err := h.db.QueryRow(`SELECT c.text_value, p.owner_id FROM charms c JOIN books p ON p.id=c.book_id WHERE c.id=?`, id).Scan(&textValue, &owner); err != nil {
+		c.JSON(404, gin.H{"error": "not found"})
+		return
+	}
+	if owner != uid {
+		c.JSON(403, gin.H{"error": "forbidden"})
+		return
+	}
+	c.JSON(200, gin.H{"text_value": textValue})
 }
 
 func (h *charmHandler) delete(c *gin.Context) {
