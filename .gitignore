@@ -10,3 +10,7 @@ package.json
 package-lock.json
 # Tag annotation script
 tag.sh
+# Project notes
+TODO.md
+# ai resume
+resume.sh

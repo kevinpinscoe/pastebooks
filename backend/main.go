@@ -103,6 +103,7 @@ func main() {
 		auth.POST("/books/:id/charms", ch.create)
 		auth.PUT("/charms/:id", ch.update)
 		auth.DELETE("/charms/:id", ch.delete)
+		auth.GET("/charms/:id/value", ch.getValue)
 	}
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
