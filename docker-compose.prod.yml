@@ -1,0 +1,48 @@
+# Production stack — pulls image from GHCR, no local build.
+#
+# Required environment variables (set in a .env file or shell):
+#   DB_ROOT_PASSWORD   strong MySQL root password
+#   JWT_SECRET         long random string for cookie signing
+#
+# Usage:
+#   docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+#
+# First run on a new host:
+#   docker login ghcr.io   (only needed for private packages)
+
+name: pastebooks-prod
+
+services:
+  db:
+    image: mysql:8.4
+    container_name: pastebooks-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: charmsdb
+    volumes:
+      - pastebooks-dbdata-prod:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro,z
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      retries: 20
+
+  app:
+    image: ghcr.io/kevinpinscoe/pastebooks:latest
+    container_name: pastebooks-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      JWT_SECRET: ${JWT_SECRET}
+      DB_DSN: "root:${DB_ROOT_PASSWORD}@tcp(db:3306)/charmsdb?parseTime=true&charset=utf8mb4"
+      COOKIE_SECURE: "true"
+    command: ["/app/server", "-config", "/app/config.yaml"]
+
+volumes:
+  pastebooks-dbdata-prod:

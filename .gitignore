@@ -1,4 +1,6 @@
 config.yaml
+# Local Go build output
+backend/backend
 # DB dumps
 backup-charmsdb-*.sql*
 .vscode/
@@ -14,3 +16,5 @@ tag.sh
 TODO.md
 # ai resume
 resume.sh
+# Production secrets
+.env.prod
