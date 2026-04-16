@@ -19,7 +19,7 @@ COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/server .
 
 # --- build frontend (static) ---
-FROM node:22-alpine3.21 AS fe
+FROM node:25-alpine3.21 AS fe
 WORKDIR /fe
 COPY frontend/ ./
 # (No build step needed for vanilla JS; keep stage for future toolchains)
