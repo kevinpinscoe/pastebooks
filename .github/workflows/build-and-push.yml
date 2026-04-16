@@ -17,7 +17,7 @@ jobs:
 
       # QEMU enables cross-arch emulation so we can output amd64+arm64
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       # Buildx is required for multi-platform + caching (BuildKit)
       - name: Set up Docker Buildx
