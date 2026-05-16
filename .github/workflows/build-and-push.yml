@@ -13,7 +13,7 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # QEMU enables cross-arch emulation so we can output amd64+arm64
       - name: Set up QEMU
