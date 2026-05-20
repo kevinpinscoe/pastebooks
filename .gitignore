@@ -16,5 +16,17 @@ tag.sh
 TODO.md
 # ai resume
 resume.sh
+resume.txt
 # Production secrets
 .env.prod
+# OS and editor artifacts
+**/.DS_Store
+**/Thumbs.db
+**/.claude
+**/.codex
+**/.trash/
+**/*.swp
+# Python artifacts
+**/*.pyc
+**/*.pyo
+**/__pycache__/
