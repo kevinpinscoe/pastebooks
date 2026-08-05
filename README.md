@@ -111,3 +111,79 @@ See the [Proxy setup guide](./proxy.md).
 ## Database
 
 See the [Database management guide](./database.md).
+
+## Supply chain — verifying a published image
+
+Every image published to `ghcr.io/kevinpinscoe/pastebooks` carries three attestations
+bound to its digest: an **SPDX SBOM** (what is inside), **SLSA provenance** (where and
+how it was built), and a **Cosign signature** (who published it, and whether it has
+changed since).
+
+```bash
+IMG=ghcr.io/kevinpinscoe/pastebooks:latest
+
+# What is inside the image
+docker buildx imagetools inspect "$IMG" --format '{{ json .SBOM }}'
+
+# Where and how it was built
+docker buildx imagetools inspect "$IMG" --format '{{ json .Provenance }}'
+
+# Who published it (tighten both regexes for real verification)
+cosign verify "$IMG" \
+  --certificate-identity-regexp='.*' \
+  --certificate-oidc-issuer-regexp='.*'
+
+# Known CVEs in the published image
+grype "$IMG"
+```
+
+SPDX documents for each platform are also attached to the GitHub release. Those are a
+convenience copy for reading without a registry client — **the registry attestation is
+the source of truth**, and the two can drift.
+
+### What the SBOM does not tell you
+
+An SBOM is an inventory, not a clean bill of health. This image can have a complete,
+correctly signed SBOM and still contain known CVEs — the SBOM is what makes finding
+them possible. Specific limits that apply to *this* image:
+
+- **The final stage is distroless and receives a statically linked Go binary.** A
+  scan of only that stage would list the distroless base packages and no Go modules
+  at all — an inventory that looks complete and is not. The `backend` and `fe` stages
+  are therefore marked `BUILDKIT_SBOM_SCAN_STAGE=true` in the `Dockerfile` so their
+  dependencies reach the attestation. If you add a build stage whose dependencies do
+  not survive into the final image, mark it too.
+- **The frontend is copied in as built assets**, not as installed packages, so
+  anything it vendors is only as visible as the `fe` stage scan makes it.
+- **`config.example.yaml` is `COPY`'d in** without package metadata and will not
+  appear as a component.
+- **Being listed is not being reachable.** A package can appear with a CVE whose
+  vulnerable code this image never calls. That is what VEX is for; there is no
+  `.vex/openvex.json` here yet because nothing is being blocked (see below).
+- **Generators disagree.** Two SBOMs of this image, from different tools, will not
+  match line for line.
+
+### The CVE gate reports, it does not block
+
+The release workflow scans the pushed digest with Grype at `severity-cutoff: high`,
+uploads the result to the repository's **Security** tab, and **does not fail the
+build**. That is deliberate, not an oversight.
+
+Measured 2026-08-04, before the gate was added, this image carried **29 findings at
+or above high** (3 critical, 26 high), essentially all inherited from the Debian base
+of the distroless image. Turning on `fail-build: true` would have meant no release
+could ever publish until every one was fixed or waived.
+
+When that baseline has been triaged, flip `fail-build` to `true` in
+`.github/workflows/build-and-push.yml`. Two things not to do instead: do not raise
+`severity-cutoff` to make findings disappear, and do not delete the step. A CVE that
+genuinely does not affect this image is dispositioned with an OpenVEX statement at
+`.vex/openvex.json`, committed and reviewable.
+
+**Known gap:** Grype resolves a multi-arch manifest to the runner's own platform, so
+the gate covers `linux/amd64` only. The `linux/arm64` image is built, signed, and has
+its own SBOM, but nothing scans it for CVEs.
+
+**Rebuild trigger:** a digest's CVE posture is frozen at build time and only degrades.
+Cut a new release when the base image or a dependency updates — a scan that was clean
+six months ago says nothing about today.

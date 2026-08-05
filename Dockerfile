@@ -2,6 +2,15 @@
 FROM golang:1.26 AS backend
 WORKDIR /src
 
+# Include this stage in the SBOM attestation.
+#
+# The final image is distroless and receives a single statically linked binary, so
+# a final-stage-only scan finds the distroless base packages and nothing else — no
+# Go module list at all. That SBOM is not empty, which is worse than if it were: it
+# looks like a complete, clean inventory. Marking the build stage is what puts the
+# actual dependency graph into the attestation.
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+
 # 1) seed deps cache
 COPY backend/go.mod backend/go.sum ./
 RUN go mod download
@@ -21,6 +30,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/server .
 # --- build frontend (static) ---
 FROM node:25-alpine3.21 AS fe
 WORKDIR /fe
+
+# Same reasoning as the backend stage: only built assets reach the final image, so
+# anything this stage introduces is invisible to a final-stage scan.
+ARG BUILDKIT_SBOM_SCAN_STAGE=true
+
 COPY frontend/ ./
 # (No build step needed for vanilla JS; keep stage for future toolchains)
 
