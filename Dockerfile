@@ -40,7 +40,21 @@ COPY frontend/ ./
 
 
 # --- final image ---
-FROM gcr.io/distroless/base-debian12:nonroot
+# static, not base.
+#
+# distroless/base ships glibc and OpenSSL so that cgo-linked binaries can run. This
+# binary is built CGO_ENABLED=0 and every dependency is pure Go (go-sql-driver/mysql
+# included), so none of that was ever loaded — it sat in the image contributing CVEs
+# for code that cannot execute. Measured on v1.2.2: 3 findings at high or above, all
+# libc6, all marked wont-fix by Debian, so no rebuild would ever have cleared them.
+#
+# distroless/static carries only ca-certificates, tzdata and /etc/passwd — enough for
+# outbound TLS and the nonroot user, with no libc at all. Removing the package beats
+# asserting the package is unreachable.
+#
+# If a future dependency needs cgo, this must go back to base-debian12 and those CVEs
+# return as a real exposure rather than a bookkeeping one.
+FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 COPY --from=backend /bin/server /app/server
 COPY --from=fe /fe /app/frontend

@@ -74,26 +74,29 @@ jobs:
           sbom: true
           provenance: mode=max
 
-      # Scan the published digest and report. WARN ONLY, deliberately.
+      # Scan the published digest. BLOCKING as of 2026-08-08.
       #
-      # Measured 2026-08-04 before this step was added: this image carries 29 findings
-      # at or above high (3 critical, 26 high), almost all inherited from the Debian
-      # base image. fail-build: true would have meant the repo could never publish
-      # again until every one was fixed or waived, so the gate reports first and the
-      # decision to start blocking is deferred until the baseline has been triaged.
+      # This gate ran warn-only from 2026-08-04 while the image carried 29 findings at
+      # or above high, later 3, all in libc6 and all marked wont-fix by Debian — so no
+      # rebuild would ever have cleared them.
       #
-      # When that happens, flip fail-build to true — do NOT raise severity-cutoff to
-      # hide findings, and do NOT delete this step. A CVE that genuinely does not
-      # affect the image is dispositioned with an OpenVEX statement at
-      # .vex/openvex.json passed to the vex: input below (absent by design today:
-      # nothing is being blocked, so nothing needs waiving).
+      # They were removed rather than waived. The final stage moved from
+      # distroless/base-debian12 to distroless/static-debian12: the binary is built
+      # CGO_ENABLED=0 with pure-Go dependencies, so glibc was present but unreachable.
+      # Measured after the change: ZERO findings at any severity. There is no
+      # .vex/openvex.json here because nothing needed dispositioning.
+      #
+      # If this starts failing, the finding is real. Fix it, or remove the package,
+      # or — only with evidence that the vulnerable code is not reachable — add an
+      # OpenVEX statement and pass it via a vex: input. Do NOT raise severity-cutoff,
+      # and do NOT delete this step.
       - name: Scan the published image for CVEs
         id: scan
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
           image: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
           severity-cutoff: high
-          fail-build: false
+          fail-build: true
           output-format: sarif
 
       # Surface the findings in the Security tab rather than only in the run log,
