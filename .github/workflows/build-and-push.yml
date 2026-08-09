@@ -74,7 +74,45 @@ jobs:
           sbom: true
           provenance: mode=max
 
-      # Scan the published digest. BLOCKING as of 2026-08-08.
+      # Resolve each platform's own digest out of the manifest list.
+      #
+      # steps.build.outputs.digest is the digest of the manifest LIST, and Grype
+      # resolves a manifest list to the RUNNER's platform. That is why the gate enabled
+      # on 2026-08-08 covered linux/amd64 only while linux/arm64 shipped unscanned —
+      # built, signed, carrying its own SBOM, and never checked for CVEs.
+      #
+      # anchore/scan-action has no platform input. That was read from action.yml at the
+      # pinned SHA rather than assumed, so the gap cannot be closed with a flag. Passing
+      # a per-platform digest as image: targets that platform directly instead.
+      #
+      # Verified 2026-08-08 before this was written: grype's reported source imageID
+      # (the image CONFIG digest) matches the config digest the registry lists for the
+      # arm64 manifest, so this genuinely analyses arm64 rather than silently
+      # re-scanning the runner's own architecture.
+      - name: Resolve the per-platform digests
+        id: digests
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          IMAGE="ghcr.io/${{ github.repository }}@${DIGEST}"
+          docker buildx imagetools inspect --raw "$IMAGE" > manifest-list.json
+
+          for arch in amd64 arm64; do
+            # os == "linux" also excludes the attestation manifests, which carry
+            # architecture "unknown" and are not scannable images.
+            d=$(jq -r --arg a "$arch" \
+              '.manifests[] | select(.platform.architecture == $a and .platform.os == "linux") | .digest' \
+              manifest-list.json)
+            # An empty digest would reach the scan step as `image: ...@` and fail in a
+            # way that reads like a scanner fault. Fail here, naming the real cause.
+            [ -n "$d" ] || { echo "::error::no linux/$arch manifest in $IMAGE"; exit 1; }
+            echo "$arch=$d" >> "$GITHUB_OUTPUT"
+            echo "linux/$arch -> $d"
+          done
+
+      # Scan each published platform digest. BLOCKING as of 2026-08-08; arm64 joined
+      # the gate on 2026-08-08 (gitops PLAN.md item 11a).
       #
       # This gate ran warn-only from 2026-08-04 while the image carried 29 findings at
       # or above high, later 3, all in libc6 and all marked wont-fix by Debian — so no
@@ -83,30 +121,55 @@ jobs:
       # They were removed rather than waived. The final stage moved from
       # distroless/base-debian12 to distroless/static-debian12: the binary is built
       # CGO_ENABLED=0 with pure-Go dependencies, so glibc was present but unreachable.
-      # Measured after the change: ZERO findings at any severity. There is no
-      # .vex/openvex.json here because nothing needed dispositioning.
+      # Measured after the change: ZERO findings at any severity, on BOTH platforms —
+      # arm64 was measured directly on 2026-08-08 and had 0 matches at any severity.
+      # There is no .vex/openvex.json here because nothing needed dispositioning.
       #
       # If this starts failing, the finding is real. Fix it, or remove the package,
       # or — only with evidence that the vulnerable code is not reachable — add an
       # OpenVEX statement and pass it via a vex: input. Do NOT raise severity-cutoff,
-      # and do NOT delete this step.
-      - name: Scan the published image for CVEs
-        id: scan
+      # and do NOT delete either scan.
+      - name: Scan the published image for CVEs (linux/amd64)
+        id: scan-amd64
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
         with:
-          image: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          image: ghcr.io/${{ github.repository }}@${{ steps.digests.outputs.amd64 }}
           severity-cutoff: high
           fail-build: true
           output-format: sarif
 
-      # Surface the findings in the Security tab rather than only in the run log,
-      # so a warn-only gate still produces something a human sees.
-      - name: Upload the scan results
+      # Each upload sits immediately after its own scan, so the report is consumed
+      # before the next scan runs. Do not reorder them into scan/scan/upload/upload.
+      #
+      # The categories must stay distinct: two SARIF uploads sharing one category
+      # overwrite each other in the Security tab, so a single "grype-container" for
+      # both platforms would show one arch and silently discard the other.
+      - name: Upload the scan results (linux/amd64)
         uses: github/codeql-action/upload-sarif@9e3211c9a3b9311dfe05da2ed48eea3386f042dd # v4.37.6
-        if: always() && steps.scan.outputs.sarif != ''
+        if: always() && steps.scan-amd64.outputs.sarif != ''
         with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
-          category: grype-container
+          sarif_file: ${{ steps.scan-amd64.outputs.sarif }}
+          category: grype-container-amd64
+
+      # if: always() so a failing amd64 scan does not hide arm64's result. Without it
+      # the job stops at the first failing platform, you fix that one, cut another
+      # release, and only then discover the second was failing too.
+      - name: Scan the published image for CVEs (linux/arm64)
+        id: scan-arm64
+        if: always() && steps.digests.outputs.arm64 != ''
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+        with:
+          image: ghcr.io/${{ github.repository }}@${{ steps.digests.outputs.arm64 }}
+          severity-cutoff: high
+          fail-build: true
+          output-format: sarif
+
+      - name: Upload the scan results (linux/arm64)
+        uses: github/codeql-action/upload-sarif@9e3211c9a3b9311dfe05da2ed48eea3386f042dd # v4.37.6
+        if: always() && steps.scan-arm64.outputs.sarif != ''
+        with:
+          sarif_file: ${{ steps.scan-arm64.outputs.sarif }}
+          category: grype-container-arm64
 
       # Install Cosign for keyless image signing
       - name: Install Cosign
