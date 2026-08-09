@@ -133,7 +133,8 @@ cosign verify "$IMG" \
   --certificate-identity-regexp='.*' \
   --certificate-oidc-issuer-regexp='.*'
 
-# Known CVEs in the published image
+# Known CVEs in the published image — NOTE: this scans your own platform only.
+# See "Reproducing the scan yourself" below to check the other one.
 grype "$IMG"
 ```
 
@@ -158,31 +159,66 @@ them possible. Specific limits that apply to *this* image:
 - **`config.example.yaml` is `COPY`'d in** without package metadata and will not
   appear as a component.
 - **Being listed is not being reachable.** A package can appear with a CVE whose
-  vulnerable code this image never calls. That is what VEX is for; there is no
-  `.vex/openvex.json` here yet because nothing is being blocked (see below).
+  vulnerable code this image never calls. That is what VEX is for. There is no
+  `.vex/openvex.json` in this repository, because nothing has ever needed
+  dispositioning — see below.
 - **Generators disagree.** Two SBOMs of this image, from different tools, will not
   match line for line.
 
-### The CVE gate reports, it does not block
+### The CVE gate blocks, on both platforms
 
-The release workflow scans the pushed digest with Grype at `severity-cutoff: high`,
-uploads the result to the repository's **Security** tab, and **does not fail the
-build**. That is deliberate, not an oversight.
+The release workflow scans **each published platform digest** — `linux/amd64` and
+`linux/arm64` — with Grype at `severity-cutoff: high`, uploads each result to the
+repository's **Security** tab under its own category, and **fails the build** on any
+finding at or above that cutoff. One finding is enough: `fail-build: true` is not a
+count threshold.
 
-Measured 2026-08-04, before the gate was added, this image carried **29 findings at
-or above high** (3 critical, 26 high), essentially all inherited from the Debian base
-of the distroless image. Turning on `fail-build: true` would have meant no release
-could ever publish until every one was fixed or waived.
+That was not always true, and the history matters more than the current state. Measured
+2026-08-04, this image carried **29 findings at or above high** (3 critical, 26 high),
+essentially all inherited from the Debian base of the distroless image, and the gate ran
+warn-only because blocking would have meant no release could publish at all.
 
-When that baseline has been triaged, flip `fail-build` to `true` in
-`.github/workflows/build-and-push.yml`. Two things not to do instead: do not raise
-`severity-cutoff` to make findings disappear, and do not delete the step. A CVE that
-genuinely does not affect this image is dispositioned with an OpenVEX statement at
-`.vex/openvex.json`, committed and reviewable.
+Those findings were **removed rather than waived.** The final stage moved from
+`distroless/base-debian12` to `distroless/static-debian12`: the binary is built
+`CGO_ENABLED=0` with pure-Go dependencies, so glibc was present in the image and
+unreachable from it. `static` has no libc at all. Measured after the change: **zero
+findings at any severity, on both platforms.** The gate became blocking on 2026-08-08 on
+a genuinely empty baseline.
 
-**Known gap:** Grype resolves a multi-arch manifest to the runner's own platform, so
-the gate covers `linux/amd64` only. The `linux/arm64` image is built, signed, and has
-its own SBOM, but nothing scans it for CVEs.
+**Nothing here is suppressed.** There is no VEX document, so what you measure locally is
+what the gate measures. If you see a finding, it is real — fix it, or remove the package.
+Two things not to do instead: do not raise `severity-cutoff` to make findings disappear,
+and do not delete the scan steps. A CVE that genuinely does not affect this image gets an
+OpenVEX statement at `.vex/openvex.json`, committed and reviewable, and only with
+evidence that the vulnerable code is unreachable.
+
+### Reproducing the scan yourself
+
+`grype "$IMG"` against a multi-arch tag scans **only your own platform**. Grype resolves
+a manifest list to whatever architecture you are running, so an `amd64` machine silently
+never looks at the `arm64` image. To check a specific platform, scan that platform's own
+digest:
+
+```bash
+IMG=ghcr.io/kevinpinscoe/pastebooks:latest
+
+# Your own platform — whatever the manifest list resolves to locally
+grype "$IMG"
+
+# A named platform, by its own digest. Swap arm64 for amd64 for the other one.
+DIGEST=$(docker buildx imagetools inspect --raw "$IMG" \
+  | jq -r '.manifests[] | select(.platform.architecture=="arm64" and .platform.os=="linux") | .digest')
+grype "ghcr.io/kevinpinscoe/pastebooks@${DIGEST}"
+```
+
+This is exactly what the release workflow does, so a local run of both should agree with
+the Security tab. The `.platform.os=="linux"` filter matters: a manifest list also
+contains attestation manifests, which report architecture `unknown` and are not
+scannable images.
+
+Until 2026-08-08 the gate covered `linux/amd64` only, for precisely the reason above —
+the workflow scanned the manifest list and the runner was amd64. The `arm64` image was
+built, signed and carried its own SBOM, but nothing had ever checked it for CVEs.
 
 **Rebuild trigger:** a digest's CVE posture is frozen at build time and only degrades.
 Cut a new release when the base image or a dependency updates — a scan that was clean
